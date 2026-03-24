@@ -19,8 +19,11 @@ from email.mime.multipart import MIMEMultipart
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ.get('MONGO_URL')
-db_name = os.environ.get('DB_NAME', 'hamaca_azul_db')
+mongo_url = os.environ.get("MONGO_URL")
+db_name = os.environ.get("DB_NAME", "hamaca_azul_db")
+
+if not mongo_url:
+    raise RuntimeError("MONGO_URL no está configurado")
 
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
@@ -118,18 +121,19 @@ async def create_contact(input: ContactCreate):
         contact_obj = Contact(**input.model_dump())
 
         doc = contact_obj.model_dump()
-        doc['timestamp'] = doc['timestamp'].isoformat()
+        doc["timestamp"] = doc["timestamp"].isoformat()
 
         await db.contacts.insert_one(doc)
 
         subject, body = get_email_content(input.interest)
         await send_email(input.email, subject, body)
 
+        logger.info(f"Contact created: {input.email} - Interest: {input.interest}")
         return contact_obj
 
     except Exception as e:
-    logger.exception("ERROR REAL:")
-    raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("ERROR REAL:")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # MIDDLEWARE
