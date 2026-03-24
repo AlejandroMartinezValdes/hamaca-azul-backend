@@ -128,8 +128,8 @@ async def create_contact(input: ContactCreate):
         return contact_obj
 
     except Exception as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=500, detail="Error")
+    logger.exception("ERROR REAL:")
+    raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # MIDDLEWARE
